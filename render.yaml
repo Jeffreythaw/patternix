@@ -3,7 +3,7 @@ services:
     name: patternix-api
     runtime: docker
     dockerContext: backend/Patternix.Api
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: backend/Patternix.Api/Dockerfile
     autoDeploy: true
     healthCheckPath: /health
     plan: free
