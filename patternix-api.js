@@ -21,6 +21,10 @@
     return null;
   }
 
+  function normalizeApiBaseUrl(url) {
+    return String(url || '').trim().replace(/\/+$/, '');
+  }
+
   function getApiBaseUrl() {
     const LIVE_API_BASE = 'https://patternix-api.onrender.com';
     const isFileProtocol = typeof window !== 'undefined' && window.location.protocol === 'file:';
