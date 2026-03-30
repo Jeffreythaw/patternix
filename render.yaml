@@ -1,13 +1,12 @@
 services:
   - type: web
     name: patternix-api
-    runtime: dotnet
-    rootDir: backend/Patternix.Api
-    buildCommand: dotnet publish Patternix.Api.csproj -c Release -o out
-    startCommand: dotnet out/Patternix.Api.dll
+    runtime: docker
+    dockerContext: backend/Patternix.Api
+    dockerfilePath: ./Dockerfile
     autoDeploy: true
+    healthCheckPath: /health
+    plan: free
     envVars:
-      - key: ASPNETCORE_URLS
-        value: http://0.0.0.0:$PORT
       - key: LS_CONNECTION_STRING
         sync: false
