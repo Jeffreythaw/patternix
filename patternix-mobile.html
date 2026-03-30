@@ -1125,6 +1125,6 @@ function exportJSON(){const data={rows,theoryResults,candidatesGenerated,log:the
 function exportCSV(){if(!theoryResults.length){alert('Run theories first.');return;}const csv='Theory,Group,Status,Hits,Total,Fwd,Coverage\n'+theoryResults.map(t=>`"${t.name}","${t.group}","${t.status}",${t.hits},${t.total},"${Math.round(t.fwdRate*100)}%","${Math.round(t.coverageScore*100)}%"`).join('\n');const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(csv);a.download='patternix.csv';a.click();}
 function exportProofText(){const text=document.getElementById('proofPanel').innerText+'\n\n'+document.getElementById('proofNotes').value;const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(text);a.download='patternix_proof.txt';a.click();}
 </script>
-<script src="patternix-api.js?v=20260330-4"></script>
+<script src="patternix-api.js?v=20260330-5"></script>
 </body>
 </html>

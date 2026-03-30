@@ -28,13 +28,17 @@
       typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const storedApi = localStorage.getItem(API_BASE_KEY) || '';
-    const defaultApi = isFileProtocol || isLocalHost ? 'http://127.0.0.1:5088' : LIVE_API_BASE;
-
-    return (
-      window.PATTERNIX_API_BASE_URL ||
-      getQueryApiBaseUrl() ||
-      normalizeApiBaseUrl(!isFileProtocol && !isLocalHost && storedApi.includes('loca.lt') ? LIVE_API_BASE : (storedApi || defaultApi))
-    );
+    if (window.PATTERNIX_API_BASE_URL) {
+      return normalizeApiBaseUrl(window.PATTERNIX_API_BASE_URL);
+    }
+    const queryApi = getQueryApiBaseUrl();
+    if (queryApi) {
+      return normalizeApiBaseUrl(queryApi);
+    }
+    if (isFileProtocol || isLocalHost) {
+      return normalizeApiBaseUrl(storedApi || 'http://127.0.0.1:5088');
+    }
+    return normalizeApiBaseUrl(LIVE_API_BASE + (storedApi.includes('loca.lt') ? '' : ''));
   }
 
   function setApiBaseUrl(url) {
