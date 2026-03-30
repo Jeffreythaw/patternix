@@ -1259,11 +1259,15 @@
   window.escapeHtml = window.escapeHtml || escapeHtml;
   bindEnterKeyHandlers();
 
+  const attemptRestore = () => restoreDatasetIfAvailable().catch(error => console.warn(error));
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      restoreDatasetIfAvailable().catch(error => console.warn(error));
+      attemptRestore();
+      setTimeout(attemptRestore, 350);
     });
   } else {
-    restoreDatasetIfAvailable().catch(error => console.warn(error));
+    attemptRestore();
+    setTimeout(attemptRestore, 350);
   }
 })();
