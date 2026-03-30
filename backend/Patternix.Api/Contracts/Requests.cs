@@ -1,6 +1,6 @@
 namespace Patternix.Api.Contracts;
 
-public sealed record ImportDatasetRequest(string Name, string RawInput);
+public sealed record ImportDatasetRequest(string Name, string RawInput, Guid? DatasetId = null);
 
 public sealed record UpdateDatasetRequest(string? Name, string? RawInput);
 

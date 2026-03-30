@@ -717,11 +717,13 @@
   }
 
   async function importDataset(rawInput) {
+    const activeDatasetId = getActiveDatasetId();
     const response = await apiRequest('/api/datasets', {
       method: 'POST',
       body: JSON.stringify({
         name: 'Patternix Dataset',
         rawInput,
+        ...(activeDatasetId ? { datasetId: activeDatasetId } : {}),
       }),
     });
 
@@ -1079,12 +1081,20 @@
     }
 
     try {
+      const incomingCount = inputDraftRows.length || raw.split('\n').map(line => line.trim()).filter(Boolean).length;
+      const appending = !!getActiveDatasetId();
       await importDataset(raw);
       if (typeof addLog === 'function') {
-        addLog('Parse', `${rows.length} rows imported into backend`, 'input');
+        addLog('Parse', `${incomingCount} rows ${appending ? 'appended to' : 'imported into'} backend`, 'input');
       }
       if (typeof showMsg === 'function') {
-        showMsg('parseResult', 'green', `Imported ${rows.length} rows into SQL-backed dataset.`);
+        showMsg(
+          'parseResult',
+          'green',
+          appending
+            ? `Appended ${incomingCount} rows to the current SQL-backed dataset.`
+            : `Imported ${incomingCount} rows into a new SQL-backed dataset.`
+        );
       }
       if (typeof switchTab === 'function') {
         switchTab('dataset');

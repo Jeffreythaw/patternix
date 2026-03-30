@@ -23,29 +23,74 @@ public sealed class DatasetService
     public async Task<DatasetResponse> ImportAsync(ImportDatasetRequest request, CancellationToken cancellationToken = default)
     {
         var parsed = _parser.Parse(request.Name, request.RawInput);
-        var dataset = new Dataset
+        if (request.DatasetId.HasValue)
+        {
+            var dataset = await _db.Datasets
+                .Include(x => x.Rows)
+                .FirstOrDefaultAsync(x => x.Id == request.DatasetId.Value, cancellationToken)
+                ?? throw new KeyNotFoundException("Dataset not found.");
+
+            var existingRowNos = dataset.Rows
+                .Select(row => row.RowNo)
+                .ToHashSet();
+
+            var duplicateRowNos = parsed.Rows
+                .Where(row => existingRowNos.Contains(row.RowNo))
+                .Select(row => row.RowNo)
+                .Distinct()
+                .OrderBy(rowNo => rowNo)
+                .ToList();
+
+            if (duplicateRowNos.Count > 0)
+            {
+                throw new InvalidOperationException($"Row {string.Join(", ", duplicateRowNos)} already exists in this dataset. Use the Dataset tab to edit it, or enter the next row number before saving.");
+            }
+
+            foreach (var row in parsed.Rows)
+            {
+                dataset.Rows.Add(new DatasetRow
+                {
+                    RowNo = row.RowNo,
+                    LeftValue = row.LeftValue,
+                    RawLine = row.RawLine,
+                    W = row.W,
+                    X = row.X,
+                    Y = row.Y,
+                    Z = row.Z,
+                    IsUnknown = row.IsUnknown,
+                    CandidatesJson = System.Text.Json.JsonSerializer.Serialize(row.Candidates)
+                });
+            }
+
+            dataset.SourceText = MergeSourceText(dataset.SourceText, request.RawInput);
+            dataset.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return ToResponse(dataset);
+        }
+
+        var newDataset = new Dataset
         {
             Name = request.Name,
-            SourceText = request.RawInput
+            SourceText = request.RawInput,
+            Rows = parsed.Rows.Select(r => new DatasetRow
+            {
+                RowNo = r.RowNo,
+                LeftValue = r.LeftValue,
+                RawLine = r.RawLine,
+                W = r.W,
+                X = r.X,
+                Y = r.Y,
+                Z = r.Z,
+                IsUnknown = r.IsUnknown,
+                CandidatesJson = System.Text.Json.JsonSerializer.Serialize(r.Candidates)
+            }).ToList()
         };
 
-        dataset.Rows = parsed.Rows.Select(r => new DatasetRow
-        {
-            RowNo = r.RowNo,
-            LeftValue = r.LeftValue,
-            RawLine = r.RawLine,
-            W = r.W,
-            X = r.X,
-            Y = r.Y,
-            Z = r.Z,
-            IsUnknown = r.IsUnknown,
-            CandidatesJson = System.Text.Json.JsonSerializer.Serialize(r.Candidates)
-        }).ToList();
-
-        _db.Datasets.Add(dataset);
+        _db.Datasets.Add(newDataset);
         await _db.SaveChangesAsync(cancellationToken);
 
-        return ToResponse(dataset);
+        return ToResponse(newDataset);
     }
 
     public async Task<List<DatasetResponse>> ListAsync(CancellationToken cancellationToken = default)
@@ -435,5 +480,14 @@ public sealed class DatasetService
     private static List<int> ParseFailures(string json)
     {
         return System.Text.Json.JsonSerializer.Deserialize<List<int>>(json) ?? [];
+    }
+
+    private static string MergeSourceText(string? existing, string addition)
+    {
+        var parts = new[] { existing?.TrimEnd(), addition.Trim() }
+            .Where(part => !string.IsNullOrWhiteSpace(part))
+            .ToArray();
+
+        return string.Join(Environment.NewLine, parts);
     }
 }

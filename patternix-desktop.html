@@ -673,7 +673,7 @@ tbody tr:hover td { background: var(--surface3); }
           <div class="alert alert-blue mb-16">
             <span class="alert-icon">ℹ</span>
             <div>
-              <strong>Tip:</strong> enter one row at a time, add it to the draft list, then save to SQL.<br>
+              <strong>Tip:</strong> save to SQL appends to the currently selected dataset. Use <code>Clear App</code> first if you want to start a new dataset.<br>
               Use <code>?</code> for unknown positions.
             </div>
           </div>
@@ -1023,6 +1023,12 @@ function loadExample() {
 function clearAll() {
   if (!confirm('Clear all data?')) return;
   rows=[]; theoryResults=[]; candidatesGenerated=[];
+  if (window.PatternixApi?.setActiveDatasetId) {
+    window.PatternixApi.setActiveDatasetId('');
+  }
+  if (window.PatternixApi?.refreshDatasetBrowser) {
+    void window.PatternixApi.refreshDatasetBrowser();
+  }
   if (typeof clearInputDraftRows === 'function') {
     clearInputDraftRows();
   }

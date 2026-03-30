@@ -471,7 +471,7 @@ tbody tr:last-child td { border-bottom: none; }
       <div class="card-body">
         <div class="alert alert-blue">
           <span>ℹ</span>
-          <div style="font-size:12px"><strong>Tip:</strong> enter one row at a time, add it to the draft list, then save to SQL.<br>Use <code>?</code> for unknowns.</div>
+          <div style="font-size:12px"><strong>Tip:</strong> save to SQL appends to the currently selected dataset. Use <code>Clear App</code> first if you want to start a new dataset.<br>Use <code>?</code> for unknowns.</div>
         </div>
         <div class="grid-2" style="gap:10px;margin-bottom:12px">
           <div><div class="inline-label">No</div><input type="text" id="inputNo" placeholder="38"></div>
@@ -802,6 +802,30 @@ function loadExample() {
   if (typeof loadExampleInputRows === 'function') {
     loadExampleInputRows();
   }
+}
+
+function clearAll() {
+  if (!confirm('Clear all data?')) return;
+  rows = [];
+  theoryResults = [];
+  candidatesGenerated = [];
+  if (window.PatternixApi?.setActiveDatasetId) {
+    window.PatternixApi.setActiveDatasetId('');
+  }
+  if (window.PatternixApi?.refreshDatasetBrowser) {
+    void window.PatternixApi.refreshDatasetBrowser();
+  }
+  if (typeof clearInputDraftRows === 'function') {
+    clearInputDraftRows();
+  }
+  document.getElementById('datasetTable').innerHTML = '<div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">No data.</div></div>';
+  document.getElementById('backtestContent').innerHTML = '<div class="no-data"><div class="no-data-icon">⚗</div><div class="no-data-text">Run theories first.</div></div>';
+  document.getElementById('candidateResults').innerHTML = '';
+  document.getElementById('proofPanel').innerHTML = '<div class="no-data"><div class="no-data-icon">⊕</div><div class="no-data-text">No proof yet.</div></div>';
+  document.getElementById('statsStrip').innerHTML = '';
+  document.getElementById('freqCard').style.display = 'none';
+  renderDataset();
+  showMsg('parseResult', 'yellow', 'Cleared.');
 }
 
 function renderDataset() {
