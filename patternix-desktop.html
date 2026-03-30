@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Patternix — Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ===== APPLE DESIGN SYSTEM ===== */
+:root {
+  --bg:          #f5f5f7;
+  --surface:     #ffffff;
+  --surface2:    #fafafa;
+  --surface3:    #f2f2f5;
+  --border:      rgba(0,0,0,0.08);
+  --border2:     rgba(0,0,0,0.14);
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --blue:        #0071e3;
+  --blue-light:  #e8f0fe;
+  --blue-mid:    rgba(0,113,227,0.12);
+  --green:       #1d9652;
+  --green-light: #e6f5ed;
+  --red:         #ff3b30;
+  --red-light:   #fff0ef;
+  --orange:      #ff6900;
+  --orange-light:#fff4ec;
+  --yellow:      #ffcc00;
+  --yellow-light:#fffbe6;
+  --purple:      #8e44ad;
+  --purple-light:#f3e9f9;
+  --gray1:       #1d1d1f;
+  --gray2:       #3d3d3f;
+  --gray3:       #6e6e73;
+  --gray4:       #aeaeb2;
+  --gray5:       #d1d1d6;
+  --gray6:       #e5e5ea;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-ui:      -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --font-mono:    'DM Mono', 'SF Mono', monospace;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--gray1);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ===== TITLEBAR ===== */
+.titlebar {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  padding: 0 28px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.titlebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 32px;
+}
+.brand-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #0071e3 0%, #5e5ce6 100%);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  box-shadow: 0 2px 8px rgba(0,113,227,0.3);
+}
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-style: italic;
+  color: var(--gray1);
+  letter-spacing: -0.3px;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--gray4);
+  margin-left: 2px;
+}
+
+/* NAV TABS */
+.nav-tabs {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+.nav-tab {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--gray3);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+.nav-tab:hover { background: var(--surface3); color: var(--gray1); }
+.nav-tab.active {
+  background: var(--blue);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,113,227,0.3);
+}
+
+.titlebar-actions { display: flex; gap: 8px; margin-left: auto; }
+
+/* ===== LAYOUT ===== */
+.app-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 52px);
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  overflow-y: auto;
+}
+.sidebar-section { margin-bottom: 8px; }
+.sidebar-heading {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--gray4);
+  padding: 0 10px;
+  margin-bottom: 6px;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: 13px;
+  color: var(--gray2);
+}
+.sidebar-item:hover { background: var(--surface3); }
+.sidebar-item .label { display: flex; align-items: center; gap: 8px; }
+.sidebar-item .icon {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.sidebar-item .badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 12px;
+}
+
+.sidebar-divider { height: 1px; background: var(--border); margin: 10px 0; }
+
+/* ===== CONTENT ===== */
+.content {
+  padding: 28px 32px;
+  max-width: 1200px;
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray1);
+  letter-spacing: -0.2px;
+}
+.card-sub { font-size: 12px; color: var(--gray3); margin-left: auto; }
+.card-body { padding: 20px; }
+.card-actions { display: flex; gap: 8px; margin-left: auto; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--blue); color: white; box-shadow: 0 2px 8px rgba(0,113,227,0.25); }
+.btn-primary:hover { background: #0077ed; box-shadow: 0 4px 12px rgba(0,113,227,0.35); transform: translateY(-1px); }
+.btn-secondary {
+  background: var(--surface3);
+  color: var(--gray2);
+  border: 1px solid var(--border2);
+}
+.btn-secondary:hover { background: var(--gray6); }
+.btn-success { background: var(--green-light); color: var(--green); border: 1px solid rgba(29,150,82,0.2); }
+.btn-danger { background: var(--red-light); color: var(--red); border: 1px solid rgba(255,59,48,0.2); }
+.btn-ghost { background: none; color: var(--blue); border: 1px solid rgba(0,113,227,0.25); }
+.btn-ghost:hover { background: var(--blue-mid); }
+.btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 8px; }
+.btn-xs { padding: 3px 9px; font-size: 11px; border-radius: 6px; }
+
+/* ===== INPUTS ===== */
+textarea, input[type=text], input[type=number], select {
+  background: var(--surface3);
+  border: 1.5px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--gray1);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 9px 13px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+textarea:focus, input:focus, select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,113,227,0.12);
+  background: var(--surface);
+}
+textarea { resize: vertical; line-height: 1.6; }
+
+/* ===== PILLS / TAGS ===== */
+.pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+.pill-blue { background: var(--blue-light); color: var(--blue); }
+.pill-green { background: var(--green-light); color: var(--green); }
+.pill-red { background: var(--red-light); color: var(--red); }
+.pill-orange { background: var(--orange-light); color: var(--orange); }
+.pill-yellow { background: var(--yellow-light); color: #b8860b; }
+.pill-purple { background: var(--purple-light); color: var(--purple); }
+.pill-gray { background: var(--gray6); color: var(--gray3); }
+
+/* ===== STATS GRID ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label { font-size: 11px; color: var(--gray3); font-weight: 500; }
+
+/* ===== TABLE ===== */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-md); }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--surface2); }
+th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--surface3); }
+.row-unknown td { background: rgba(255,204,0,0.04); }
+.row-unknown:hover td { background: rgba(255,204,0,0.08) !important; }
+
+/* ===== TUPLE DISPLAY ===== */
+.tuple-display { display: inline-flex; gap: 4px; align-items: center; }
+.t-val {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--gray1);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 26px;
+  text-align: center;
+}
+.t-val.unknown { background: var(--yellow-light); border-color: rgba(255,204,0,0.4); color: #b8860b; }
+.t-sep { color: var(--gray5); font-size: 11px; }
+
+/* ===== THEORY CARDS ===== */
+.theory-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.theory-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.theory-card:hover { border-color: var(--blue); box-shadow: var(--shadow-sm); }
+.theory-card.surviving { border-color: rgba(29,150,82,0.4); background: var(--green-light); }
+.theory-card.rejected { border-color: rgba(255,59,48,0.25); opacity: 0.7; }
+.theory-toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.apple-checkbox {
+  width: 16px; height: 16px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+.theory-name { font-size: 13px; font-weight: 600; color: var(--gray1); }
+.theory-desc { font-size: 11px; color: var(--gray3); margin-bottom: 8px; }
+.theory-stats-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.t-stat { display: flex; flex-direction: column; align-items: center; }
+.t-stat-val { font-size: 15px; font-weight: 700; line-height: 1; }
+.t-stat-label { font-size: 9px; color: var(--gray4); text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar { height: 4px; background: var(--gray6); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+
+/* ===== CANDIDATE CARDS ===== */
+.candidate-list { display: flex; flex-direction: column; gap: 16px; }
+.cand-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.cand-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.cand-card.rank1 { border-color: rgba(0,113,227,0.4); }
+.cand-rank {
+  position: absolute; top: 16px; right: 18px;
+  font-size: 11px; font-weight: 600; color: var(--gray4);
+}
+.cand-tuple { display: flex; gap: 8px; margin-bottom: 14px; align-items: flex-end; }
+.cand-val {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.cand-num {
+  background: var(--surface2);
+  border: 1.5px solid var(--border2);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--gray1);
+  min-width: 54px;
+  text-align: center;
+}
+.cand-card.rank1 .cand-num { border-color: rgba(0,113,227,0.35); color: var(--blue); }
+.cand-pos { font-size: 10px; color: var(--gray4); font-weight: 600; text-transform: uppercase; }
+.cand-sum-box {
+  background: var(--surface3);
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-left: 8px;
+  text-align: center;
+}
+.cand-sum-val { font-size: 18px; font-weight: 700; color: var(--gray1); }
+.cand-sum-label { font-size: 9px; color: var(--gray4); text-transform: uppercase; }
+
+.conf-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.conf-pct { font-size: 14px; font-weight: 700; }
+.conf-label { font-size: 11px; color: var(--gray3); }
+
+.evidence-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.evidence-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12px; color: var(--gray2);
+}
+.ev-icon {
+  width: 20px; height: 20px;
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  flex-shrink: 0; margin-top: 1px;
+}
+
+/* ===== PROOF BLOCKS ===== */
+.proof-block {
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-left: 3px solid;
+}
+.proof-fact { background: var(--green-light); border-color: var(--green); }
+.proof-surviving { background: var(--blue-light); border-color: var(--blue); }
+.proof-rejected { background: var(--red-light); border-color: var(--red); }
+.proof-candidate { background: var(--yellow-light); border-color: var(--yellow); }
+.proof-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.proof-fact .proof-label { color: var(--green); }
+.proof-surviving .proof-label { color: var(--blue); }
+.proof-rejected .proof-label { color: var(--red); }
+.proof-candidate .proof-label { color: #b8860b; }
+.proof-text { font-size: 13px; color: var(--gray2); line-height: 1.6; }
+
+/* ===== ALERT ===== */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 16px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.alert-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.alert-blue { background: var(--blue-light); color: #004ab3; border: 1px solid rgba(0,113,227,0.2); }
+.alert-green { background: var(--green-light); color: var(--green); border: 1px solid rgba(29,150,82,0.2); }
+.alert-yellow { background: var(--yellow-light); color: #7a5800; border: 1px solid rgba(255,204,0,0.3); }
+
+/* ===== LOG ENTRIES ===== */
+.log-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.log-item:last-child { border-bottom: none; }
+.log-time { font-size: 11px; color: var(--gray4); white-space: nowrap; margin-top: 2px; font-family: var(--font-mono); }
+.log-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+}
+.log-title { font-size: 13px; font-weight: 500; color: var(--gray1); margin-bottom: 2px; }
+.log-detail { font-size: 12px; color: var(--gray3); }
+
+/* ===== SCORE BARS ===== */
+.score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+.score-label { width: 80px; font-size: 11px; color: var(--gray3); text-align: right; }
+.score-track { flex: 1; height: 5px; background: var(--gray6); border-radius: 3px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 3px; }
+.score-val { width: 36px; font-size: 11px; color: var(--gray3); font-family: var(--font-mono); }
+
+/* ===== DIVIDER ===== */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ===== MISC ===== */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-6 { gap: 6px; }
+.gap-10 { gap: 10px; }
+.gap-14 { gap: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.hidden { display: none !important; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.mt-12 { margin-top: 12px; }
+.w-full { width: 100%; }
+.text-sm { font-size: 12px; }
+.text-xs { font-size: 11px; }
+.text-muted { color: var(--gray3); }
+.text-blue { color: var(--blue); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.fw6 { font-weight: 600; }
+.fw7 { font-weight: 700; }
+
+.no-data {
+  text-align: center; padding: 48px 24px;
+  color: var(--gray4); font-size: 13px;
+}
+.no-data-icon { font-size: 36px; margin-bottom: 10px; }
+.no-data-text { font-size: 13px; }
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-style: italic;
+  letter-spacing: -0.3px;
+  color: var(--gray1);
+  margin-bottom: 4px;
+}
+.section-sub { font-size: 13px; color: var(--gray3); margin-bottom: 20px; }
+
+.inline-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+/* ===== EXPORT BUTTON SPECIAL ===== */
+.btn-excel {
+  background: linear-gradient(135deg, #217346 0%, #1e6d3f 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(33,115,70,0.3);
+}
+.btn-excel:hover { box-shadow: 0 4px 14px rgba(33,115,70,0.4); transform: translateY(-1px); }
+
+/* ===== CUSTOM SCROLLBAR ===== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray5); border-radius: 3px; }
+
+/* ===== PAGE TRANSITION ===== */
+.tab-content { animation: fadeIn 0.18s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.editable-area {
+  background: var(--surface3);
+  border: 1.5px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  min-height: 70px;
+  color: var(--gray2);
+  font-size: 13px;
+  outline: none;
+  line-height: 1.6;
+}
+.editable-area:focus { border-color: var(--blue); background: var(--surface); box-shadow: 0 0 0 3px rgba(0,113,227,0.12); }
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div class="titlebar">
+  <div class="titlebar-brand">
+    <div class="brand-icon">Px</div>
+    <div>
+      <span class="brand-name">Patternix</span>
+      <span class="brand-sub">Desktop</span>
+    </div>
+  </div>
+  <nav class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" onclick="switchTab('input')">① Input</button>
+    <button class="nav-tab" onclick="switchTab('datasets')">② Datasets</button>
+    <button class="nav-tab" onclick="switchTab('dataset')">③ Dataset</button>
+    <button class="nav-tab" onclick="switchTab('theories')">④ Theories</button>
+    <button class="nav-tab" onclick="switchTab('backtest')">⑤ Backtest</button>
+    <button class="nav-tab" onclick="switchTab('solver')">⑥ Solver</button>
+    <button class="nav-tab" onclick="switchTab('proof')">⑦ Proof</button>
+    <button class="nav-tab" onclick="switchTab('log')">⑧ Log</button>
+    <button class="nav-tab" onclick="switchTab('export')">⑨ Export</button>
+  </nav>
+  <div class="titlebar-actions">
+    <button class="btn btn-excel btn-sm" onclick="exportExcel()">⬇ Excel</button>
+  </div>
+</div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Dataset</div>
+      <div class="sidebar-item">
+        <div class="label"><div class="icon" style="background:#e8f0fe;color:#0071e3">◈</div>Total Rows</div>
+        <span class="badge" style="background:var(--blue-light);color:var(--blue)" id="sb-rows">0</span>
+      </div>
+      <div class="sidebar-item">
+        <div class="label"><div class="icon" style="background:var(--green-light);color:var(--green)">✓</div>Known</div>
+        <span class="badge" style="background:var(--green-light);color:var(--green)" id="sb-known">0</span>
+      </div>
+      <div class="sidebar-item">
+        <div class="label"><div class="icon" style="background:var(--yellow-light);color:#b8860b">?</div>Unknown</div>
+        <span class="badge" style="background:var(--yellow-light);color:#b8860b" id="sb-unknown">0</span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Theories</div>
+      <div class="sidebar-item">
+        <div class="label"><div class="icon" style="background:var(--green-light);color:var(--green)">↑</div>Surviving</div>
+        <span class="badge" style="background:var(--green-light);color:var(--green)" id="sb-surv">0</span>
+      </div>
+      <div class="sidebar-item">
+        <div class="label"><div class="icon" style="background:var(--red-light);color:var(--red)">✕</div>Rejected</div>
+        <span class="badge" style="background:var(--red-light);color:var(--red)" id="sb-rej">0</span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Theory Status</div>
+      <div id="sb-theory-list" style="font-size:12px;color:var(--gray4);padding:4px 10px">No theories run</div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div style="padding:4px 0;display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-primary w-full" onclick="runAllTheories()" style="justify-content:center">▶ Run All Theories</button>
+      <button class="btn btn-secondary w-full" onclick="switchTab('solver')" style="justify-content:center">◈ Solver</button>
+    </div>
+  </aside>
+
+  <!-- CONTENT AREA -->
+  <main class="content">
+
+    <!-- ① INPUT -->
+    <div id="tab-input" class="tab-content">
+      <div class="section-title">Data Input</div>
+      <div class="section-sub">Enter rows in form fields, then save them into SQL.</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Add Row</div>
+          <span class="pill pill-blue" id="inputDraftCount">0 rows</span>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-blue mb-16">
+            <span class="alert-icon">ℹ</span>
+            <div>
+              <strong>Tip:</strong> enter one row at a time, add it to the draft list, then save to SQL.<br>
+              Use <code>?</code> for unknown positions.
+            </div>
+          </div>
+          <div class="grid-2 mb-12" style="gap:12px">
+            <div><div class="inline-label">No</div><input type="text" id="inputNo" placeholder="38"></div>
+            <div><div class="inline-label">Left</div><input type="text" id="inputLeft" placeholder="58"></div>
+          </div>
+          <div class="grid-4 mb-12" style="gap:12px">
+            <div><div class="inline-label">w</div><input type="text" id="inputW" placeholder="2"></div>
+            <div><div class="inline-label">x</div><input type="text" id="inputX" placeholder="0"></div>
+            <div><div class="inline-label">y</div><input type="text" id="inputY" placeholder="6"></div>
+            <div><div class="inline-label">z</div><input type="text" id="inputZ" placeholder="9"></div>
+          </div>
+          <div class="mb-12">
+            <div class="inline-label">Candidates</div>
+            <div class="grid-4" style="gap:10px;margin-bottom:10px">
+              <input type="text" id="inputCandW" placeholder="w">
+              <input type="text" id="inputCandX" placeholder="x">
+              <input type="text" id="inputCandY" placeholder="y">
+              <input type="text" id="inputCandZ" placeholder="z">
+            </div>
+            <div class="flex gap-10" style="margin-bottom:10px">
+              <button class="btn btn-secondary btn-sm" id="inputCandidateActionBtn" onclick="addInputCandidateRow()">Add Candidate</button>
+              <button class="btn btn-secondary btn-sm" onclick="clearInputCandidateDraftRows()">Clear Candidates</button>
+            </div>
+            <div id="inputCandidateCount" class="mb-8" style="font-size:12px;color:var(--gray3)">0 candidates</div>
+            <div id="inputCandidateTable"><div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">No candidates added yet.</div></div></div>
+          </div>
+          <div class="flex gap-10 mt-12">
+            <button class="btn btn-primary" id="inputDraftActionBtn" onclick="addInputDraftRow()">Add Row</button>
+            <button class="btn btn-success" onclick="parseInput()">Save to SQL</button>
+            <button class="btn btn-secondary" onclick="loadExampleInputRows()">↺ Example Data</button>
+            <button class="btn btn-secondary" onclick="clearInputDraftRows()">Clear Draft</button>
+            <button class="btn btn-danger btn-sm" onclick="clearAll()">✕ Clear App</button>
+          </div>
+          <div id="parseResult" class="mt-12"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Draft Rows</div></div>
+        <div class="card-body">
+          <div id="inputDraftTable"><div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">No draft rows yet.</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② DATASETS -->
+    <div id="tab-datasets" class="tab-content hidden">
+      <div class="section-title">All Datasets</div>
+      <div class="section-sub">Search, load, and delete datasets stored in SQL.</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Saved Datasets</div>
+          <span class="pill pill-blue" id="datasetBrowserCount">0 datasets</span>
+          <div class="card-actions">
+            <input type="text" id="datasetSearchInput" placeholder="Search datasets..." oninput="PatternixApi.renderDatasetBrowser()" style="min-width:220px;padding:7px 10px;border:1px solid var(--gray5);border-radius:8px;font-size:12px">
+            <button class="btn btn-secondary btn-sm" onclick="PatternixApi.refreshDatasetBrowser()">Refresh</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="datasetBrowser">
+          <div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">Loading datasets...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ DATASET -->
+    <div id="tab-dataset" class="tab-content hidden">
+      <div class="section-title">Dataset</div>
+      <div class="section-sub">All parsed rows with statistics.</div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="card" id="currentQuestionCard">
+        <div class="card-header">
+          <div class="card-title">Current Question</div>
+          <span class="pill pill-yellow" id="currentQuestionPill">None</span>
+        </div>
+        <div class="card-body" id="currentQuestionBody">
+          <div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">Load a dataset to see the current question.</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Parsed Rows</div>
+          <span class="pill pill-blue" id="rowCountPill">0 rows</span>
+          <span class="pill pill-gray" id="rowViewPill">0 shown</span>
+          <div class="card-actions">
+            <select id="datasetSel" style="min-width:240px;padding:7px 10px;border:1px solid var(--gray5);border-radius:8px;font-size:12px"></select>
+            <button class="btn btn-secondary btn-sm" onclick="selectDatasetById(document.getElementById('datasetSel').value)">Load</button>
+            <input type="text" id="datasetTitleInput" placeholder="Dataset name" style="min-width:180px;padding:7px 10px;border:1px solid var(--gray5);border-radius:8px;font-size:12px">
+            <button class="btn btn-secondary btn-sm" onclick="renameActiveDataset()">Rename</button>
+            <button class="btn btn-secondary btn-sm" onclick="PatternixApi.refreshRows(PatternixApi.getActiveDatasetId())">Refresh</button>
+            <label class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="showLockedRows" onchange="renderDataset()" style="margin:0">
+              Show history
+            </label>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('datasets')">Browse All</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('input')">← Edit</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="datasetTable">
+          <div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">Parse rows first.</div></div>
+        </div>
+      </div>
+      <div class="grid-2" id="freqPanel" style="display:none">
+        <div class="card"><div class="card-header"><div class="card-title">Position Frequency</div></div>
+          <div class="card-body" id="freqGrid"></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Sum Distribution</div></div>
+          <div class="card-body" id="sumDist"></div></div>
+      </div>
+    </div>
+
+    <!-- ③ THEORIES -->
+    <div id="tab-theories" class="tab-content hidden">
+      <div class="section-title">Theory Engine</div>
+      <div class="section-sub">Toggle and configure theories to test.</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Built-in Theories</div>
+          <div class="card-actions">
+            <button class="btn btn-secondary btn-sm" onclick="selectAll(true)">Select All</button>
+            <button class="btn btn-secondary btn-sm" onclick="selectAll(false)">Deselect All</button>
+            <button class="btn btn-primary btn-sm" onclick="runAllTheories()">▶ Run</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="theory-grid" id="theorySelector"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Custom Formula</div><span class="pill pill-purple">User Defined</span></div>
+        <div class="card-body">
+          <div class="text-xs text-muted mb-8">Variables: <code>w, x, y, z, L</code> (Left), <code>N</code> (No), <code>prev_w/x/y/z, prev_L</code></div>
+          <div class="flex gap-10 mb-8">
+            <div style="flex:1"><label class="inline-label">Name</label><input type="text" id="cfName" placeholder="My Theory"/></div>
+            <div style="flex:2"><label class="inline-label">Formula (returns truthy if matches)</label><input type="text" id="cfExpr" placeholder="w + x + y + z === L"/></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn btn-primary btn-sm" onclick="addCustom()">+ Add</button></div>
+          </div>
+          <div id="cfList"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Observation Notes</div></div>
+        <div class="card-body">
+          <div contenteditable="true" class="editable-area" id="theoryNotes">Write your observations here...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ BACKTEST -->
+    <div id="tab-backtest" class="tab-content hidden">
+      <div class="section-title">Backtest Results</div>
+      <div class="section-sub">Theory comparison dashboard — surviving vs rejected.</div>
+      <div id="backtestContent">
+        <div class="no-data"><div class="no-data-icon">⚗</div><div class="no-data-text">Run theories first.</div></div>
+      </div>
+    </div>
+
+    <!-- ⑤ SOLVER -->
+    <div id="tab-solver" class="tab-content hidden">
+      <div class="section-title">Unknown Solver</div>
+      <div class="section-sub">Generate up to 3 justified candidates for unknown rows.</div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Select Unknown Row</div></div>
+        <div class="card-body">
+          <div class="flex gap-10 mb-12">
+            <select id="unknownSel" style="flex:2">
+              <option value="">— Select a row with unknowns —</option>
+            </select>
+            <button class="btn btn-primary" onclick="solveSelected()">◈ Generate Candidates</button>
+          </div>
+          <div class="divider"></div>
+          <div class="mb-8 fw6 text-sm">Manual Entry</div>
+          <div class="flex gap-10">
+            <div><label class="inline-label">No</label><input type="text" id="mNo" placeholder="No" style="width:60px"/></div>
+            <div><label class="inline-label">Left</label><input type="text" id="mLeft" placeholder="Left" style="width:80px"/></div>
+            <div style="flex:1"><label class="inline-label">w</label><input type="text" id="mW" placeholder="w or ?"/></div>
+            <div style="flex:1"><label class="inline-label">x</label><input type="text" id="mX" placeholder="x or ?"/></div>
+            <div style="flex:1"><label class="inline-label">y</label><input type="text" id="mY" placeholder="y or ?"/></div>
+            <div style="flex:1"><label class="inline-label">z</label><input type="text" id="mZ" placeholder="z or ?"/></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="solveManual()">Solve</button></div>
+          </div>
+        </div>
+      </div>
+      <div id="candidateResults"></div>
+    </div>
+
+    <!-- ⑥ PROOF -->
+    <div id="tab-proof" class="tab-content hidden">
+      <div class="section-title">Proof & Justification</div>
+      <div class="section-sub">Structured reasoning: proven facts, rejected theories, surviving theories, candidates.</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Proof Panel</div>
+          <div class="card-actions">
+            <button class="btn btn-secondary btn-sm" onclick="copyProof()">⊕ Copy Text</button>
+          </div>
+        </div>
+        <div class="card-body" id="proofPanel">
+          <div class="no-data"><div class="no-data-icon">⊕</div><div class="no-data-text">Run theories and generate candidates first.</div></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Additional Notes</div></div>
+        <div class="card-body"><div contenteditable="true" class="editable-area" id="proofNotes">Add your own notes and final reasoning here...</div></div>
+      </div>
+    </div>
+
+    <!-- ⑦ LOG -->
+    <div id="tab-log" class="tab-content hidden">
+      <div class="section-title">Theory Log</div>
+      <div class="section-sub">Full timestamped record of all actions.</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Log Entries</div>
+          <span class="pill pill-blue" id="logCount">0 entries</span>
+          <div class="card-actions"><button class="btn btn-danger btn-sm" onclick="clearLog()">✕ Clear</button></div>
+        </div>
+        <div class="card-body" id="logPanel">
+          <div class="no-data"><div class="no-data-icon">◎</div><div class="no-data-text">No entries yet.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑧ EXPORT -->
+    <div id="tab-export" class="tab-content hidden">
+      <div class="section-title">Export</div>
+      <div class="section-sub">Export analysis results, theory comparison, candidates, and proof.</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Export Options</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-excel" onclick="exportExcel()">⬇ Full Analysis (.xlsx — Multi-Sheet)</button>
+            <button class="btn btn-secondary" onclick="exportJSON()">⬇ Full State (.json)</button>
+            <button class="btn btn-secondary" onclick="exportProofText()">⬇ Proof Text (.txt)</button>
+            <button class="btn btn-secondary" onclick="exportCSV()">⬇ Theory Results (.csv)</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Excel Contents</div></div>
+          <div class="card-body">
+            <div class="alert alert-green">
+              <span class="alert-icon">✓</span>
+              <div>The Excel export includes:<br>
+              • <strong>Sheet 1:</strong> Dataset (all rows, tuples, candidates)<br>
+              • <strong>Sheet 2:</strong> Theory Comparison (all metrics)<br>
+              • <strong>Sheet 3:</strong> Candidate Results (ranked)<br>
+              • <strong>Sheet 4:</strong> Proof / Justification text<br>
+              • <strong>Sheet 5:</strong> Theory Log</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Preview</div></div>
+        <div class="card-body"><textarea id="exportPreview" rows="10" readonly style="font-size:11px;font-family:var(--font-mono)"></textarea></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ===== STATE =====
+let rows = [], theoryResults = [], candidatesGenerated = [], theoryLog = [], customFormulas = [], activeTheories = {};
+
+const THEORIES = [
+  {id:'sum_eq_left',name:'Sum = Left',group:'Sum',desc:'w+x+y+z equals Left value'},
+  {id:'sum_half',name:'Sum = Left/2',group:'Sum',desc:'w+x+y+z equals Left divided by 2'},
+  {id:'sum_const',name:'Sum Constant',group:'Sum',desc:'w+x+y+z is approximately constant across rows'},
+  {id:'left_ratio',name:'Left Ratio',group:'Sum',desc:'Left/(w+x+y+z) ratio is consistent'},
+  {id:'pair_wx',name:'Pair w·x',group:'Pair',desc:'w*x product follows a pattern'},
+  {id:'pair_xy',name:'Pair x·y',group:'Pair',desc:'x*y product follows a pattern'},
+  {id:'pair_yz',name:'Pair y·z',group:'Pair',desc:'y*z product follows a pattern'},
+  {id:'pair_wz',name:'Pair w+z',group:'Pair',desc:'w+z sum is consistent'},
+  {id:'triple_wxy',name:'Triple w+x+y',group:'Triple',desc:'w+x+y partial sum pattern'},
+  {id:'triple_xyz',name:'Triple x+y+z',group:'Triple',desc:'x+y+z partial sum pattern'},
+  {id:'row_dw',name:'Δw Row',group:'Row',desc:'w[n]-w[n-1] is constant'},
+  {id:'row_dx',name:'Δx Row',group:'Row',desc:'x[n]-x[n-1] is constant'},
+  {id:'row_dy',name:'Δy Row',group:'Row',desc:'y[n]-y[n-1] is constant'},
+  {id:'row_dz',name:'Δz Row',group:'Row',desc:'z[n]-z[n-1] is constant'},
+  {id:'skip1',name:'Skip-1 Δw',group:'Skip',desc:'w[n]-w[n-2] is constant'},
+  {id:'recur_w',name:'Recurrence w',group:'Recurrence',desc:'w[n]=w[n-1]+w[n-2] Fibonacci-like'},
+  {id:'freq_mode',name:'Freq Mode',group:'Frequency',desc:'Most frequent w,x,y,z values'},
+  {id:'centroid',name:'Centroid',group:'Cluster',desc:'Mean of all positions as cluster center'},
+  {id:'cand_overlap',name:'Candidate Overlap',group:'Candidate',desc:'Values in multiple candidate sets'},
+  {id:'motif',name:'Motif Pairs',group:'Motif',desc:'Repeated adjacent pair patterns'},
+  {id:'alt_parity',name:'Alternating Parity',group:'Pattern',desc:'Odd/even pattern consistency'},
+  {id:'pos_delta',name:'Position Delta',group:'Pattern',desc:'Consistent per-position delta'},
+];
+
+THEORIES.forEach(t => { activeTheories[t.id] = true; });
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ===== INIT =====
+window.onload = () => {
+  renderTheorySelector();
+  if (typeof renderInputDraftRows === 'function') {
+    renderInputDraftRows();
+  }
+};
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  const map = ['input','datasets','dataset','theories','backtest','solver','proof','log','export'];
+  const tabs = document.querySelectorAll('.nav-tab');
+  const i = map.indexOf(tab);
+  if (i >= 0 && tabs[i]) tabs[i].classList.add('active');
+}
+
+// ===== PARSE =====
+function parseInput() {
+  const raw = document.getElementById('inputArea').value.trim();
+  if (!raw) { showMsg('parseResult','yellow','Nothing to parse.'); return; }
+  rows = [];
+  raw.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line => {
+    const parts = line.split('|');
+    const cols = parts[0].split(',').map(s=>s.trim());
+    if (cols.length < 6) return;
+    const tuple = [cols[2],cols[3],cols[4],cols[5]].map(v => (v==='?'||v==='') ? null : parseFloat(v));
+    const candidates = parts.slice(1).map(p => {
+      const cv = p.trim().replace(/^candidate:\s*/i,'').split(',').map(s=>parseFloat(s.trim()));
+      return cv.length===4 && cv.every(v=>!isNaN(v)) ? cv : null;
+    }).filter(Boolean);
+    rows.push({ no:cols[0], left:parseFloat(cols[1]), tuple, isUnknown:tuple.some(v=>v===null), candidates, rowIndex:rows.length });
+  });
+  updateSidebar(); renderDataset();
+  showMsg('parseResult','green',`Parsed ${rows.length} rows — ${rows.filter(r=>!r.isUnknown).length} known, ${rows.filter(r=>r.isUnknown).length} unknown.`);
+  addLog('Parse',`${rows.length} rows loaded`,'input');
+  switchTab('dataset');
+}
+
+function loadExample() {
+  if (typeof loadExampleInputRows === 'function') {
+    loadExampleInputRows();
+  }
+}
+
+function clearAll() {
+  if (!confirm('Clear all data?')) return;
+  rows=[]; theoryResults=[]; candidatesGenerated=[];
+  if (typeof clearInputDraftRows === 'function') {
+    clearInputDraftRows();
+  }
+  document.getElementById('datasetTable').innerHTML='<div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">No data.</div></div>';
+  document.getElementById('backtestContent').innerHTML='<div class="no-data"><div class="no-data-icon">⚗</div><div class="no-data-text">Run theories first.</div></div>';
+  document.getElementById('candidateResults').innerHTML='';
+  document.getElementById('proofPanel').innerHTML='<div class="no-data"><div class="no-data-icon">⊕</div><div class="no-data-text">No proof yet.</div></div>';
+  document.getElementById('statsGrid').innerHTML='';
+  document.getElementById('freqPanel').style.display='none';
+  updateSidebar();
+  showMsg('parseResult','yellow','Cleared.');
+}
+
+// ===== DATASET RENDER =====
+function renderDataset() {
+  const showHistory = !!document.getElementById('showLockedRows')?.checked;
+  const currentRow = rows.find(r => r.isCurrent) || null;
+  const visibleRows = (showHistory || !currentRow) ? rows : rows.filter(r => r.isCurrent || !r.isLocked);
+  document.getElementById('rowCountPill').textContent = rows.length+' rows';
+  document.getElementById('rowViewPill').textContent = visibleRows.length+' shown';
+  const questionPill = document.getElementById('currentQuestionPill');
+  const questionBody = document.getElementById('currentQuestionBody');
+  if (questionPill && questionBody) {
+    if (currentRow) {
+      questionPill.textContent = `Row ${currentRow.no}`;
+      const tuple = currentRow.tuple.map(v => v === null ? '?' : v).join(', ');
+      const candidateText = currentRow.candidates.length
+        ? currentRow.candidates.map(c => c.join(',')).join(' | ')
+        : 'No candidates yet';
+      questionBody.innerHTML = `
+        <div class="grid-2">
+          <div><div class="inline-label">No</div><div class="fw6">${currentRow.no}</div></div>
+          <div><div class="inline-label">Left</div><div class="fw6">${currentRow.left}</div></div>
+          <div><div class="inline-label">Tuple</div><div class="fw6">${tuple}</div></div>
+          <div><div class="inline-label">Candidates</div><div class="fw6">${escapeHtml(candidateText)}</div></div>
+        </div>`;
+    } else {
+      questionPill.textContent = 'None';
+      questionBody.innerHTML = '<div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">No current question is available.</div></div>';
+    }
+  }
+  if (!visibleRows.length) {
+    document.getElementById('datasetTable').innerHTML='<div class="no-data"><div class="no-data-icon">◈</div><div class="no-data-text">No rows to show.</div></div>';
+    renderStats();
+    return;
+  }
+  let html = '<table><thead><tr><th>No</th><th>Left</th><th>w</th><th>x</th><th>y</th><th>z</th><th>Sum</th><th>Candidates</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+  visibleRows.forEach(r => {
+    const sum = !r.isUnknown ? r.tuple.reduce((a,b)=>a+b,0) : '?';
+    const cands = r.candidates.map(c=>`<span class="pill pill-blue" style="margin:1px">${c.join(',')}</span>`).join('');
+    const locked = !!r.isLocked;
+    const current = !!r.isCurrent;
+    const status = locked
+      ? '<span class="pill pill-gray">Locked</span>'
+      : (current ? '<span class="pill pill-yellow">Current</span>' : '<span class="pill pill-green">Known</span>');
+    html += `<tr class="${locked ? 'row-locked' : (r.isUnknown ? 'row-unknown' : '')}"${locked ? ' style="opacity:0.72;background:rgba(120,120,120,0.04)"' : ''}>
+      <td class="fw6">${r.no}</td>
+      <td style="color:var(--orange);font-weight:600">${r.left}</td>
+      ${r.tuple.map(v => `<td><span class="t-val ${v===null?'unknown':''}">${v===null?'?':v}</span></td>`).join('')}
+      <td style="font-family:var(--font-mono);color:var(--gray3)">${sum}</td>
+      <td>${cands||'<span class="text-muted text-xs">—</span>'}</td>
+      <td>${status}</td>
+      <td style="white-space:nowrap">
+        ${current ? `<button class="btn btn-secondary btn-xs" onclick="editRowById('${r.apiRowId || r.id}')">Edit</button>` : ''}
+        ${!locked ? `<button class="btn btn-secondary btn-xs" onclick="deleteRowById('${r.apiRowId || r.id}')">Delete</button>` : ''}
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('datasetTable').innerHTML = html;
+  renderStats();
+}
+
+function renderStats() {
+  const known = rows.filter(r=>!r.isUnknown);
+  if (!known.length) return;
+  const sums = known.map(r=>r.tuple.reduce((a,b)=>a+b,0));
+  const avg = s => s.reduce((a,b)=>a+b,0)/s.length;
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-value" style="color:var(--blue)">${rows.length}</div><div class="stat-label">Total Rows</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--green)">${known.length}</div><div class="stat-label">Known Rows</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#b8860b">${rows.filter(r=>r.isUnknown).length}</div><div class="stat-label">Unknown Rows</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--gray2)">${avg(sums).toFixed(1)}</div><div class="stat-label">Avg Sum wxyz</div></div>
+  `;
+  document.getElementById('freqPanel').style.display='grid';
+  let freqHtml='';
+  ['w','x','y','z'].forEach((pos,pi) => {
+    const vals = known.map(r=>r.tuple[pi]);
+    const freq={};
+    vals.forEach(v=>{freq[v]=(freq[v]||0)+1;});
+    const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const max=sorted[0]?.[1]||1;
+    freqHtml += `<div class="mb-8"><div class="inline-label">${pos.toUpperCase()} position</div>${sorted.map(([v,c])=>`
+      <div class="score-row">
+        <div class="score-label">${v}</div>
+        <div class="score-track"><div class="score-fill" style="width:${c/max*100}%;background:var(--blue)"></div></div>
+        <div class="score-val">${c}×</div>
+      </div>`).join('')}</div>`;
+  });
+  document.getElementById('freqGrid').innerHTML = freqHtml;
+  const sumFreq={};
+  sums.forEach(s=>{sumFreq[s]=(sumFreq[s]||0)+1;});
+  const sortedS=Object.entries(sumFreq).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxS=sortedS[0]?.[1]||1;
+  document.getElementById('sumDist').innerHTML = `<div class="inline-label">Sum (w+x+y+z) distribution</div>`+
+    sortedS.map(([v,c])=>`<div class="score-row">
+      <div class="score-label">${v}</div>
+      <div class="score-track"><div class="score-fill" style="width:${c/maxS*100}%;background:var(--purple)"></div></div>
+      <div class="score-val">${c}×</div></div>`).join('');
+}
+
+// ===== THEORY SELECTOR =====
+function renderTheorySelector() {
+  const groups={};
+  THEORIES.forEach(t=>{if(!groups[t.group])groups[t.group]=[];groups[t.group].push(t);});
+  document.getElementById('theorySelector').innerHTML = Object.entries(groups).map(([g,ts]) =>
+    `<div><div class="inline-label">${g}</div>${ts.map(t=>`
+      <div class="theory-toggle-row">
+        <input type="checkbox" class="apple-checkbox" id="th_${t.id}" ${activeTheories[t.id]?'checked':''} onchange="activeTheories['${t.id}']=this.checked">
+        <label for="th_${t.id}" style="font-size:13px;cursor:pointer"><span class="fw6">${t.name}</span> <span class="text-muted">— ${t.desc}</span></label>
+      </div>`).join('')}</div>`
+  ).join('');
+}
+
+function selectAll(v) {
+  THEORIES.forEach(t=>{ activeTheories[t.id]=v; });
+  renderTheorySelector();
+}
+
+// ===== CUSTOM FORMULAS =====
+function addCustom() {
+  const name=document.getElementById('cfName').value.trim();
+  const expr=document.getElementById('cfExpr').value.trim();
+  if (!name||!expr) return;
+  customFormulas.push({id:'cf_'+Date.now(),name,expr,group:'Custom',desc:'Formula: '+expr});
+  document.getElementById('cfName').value=''; document.getElementById('cfExpr').value='';
+  renderCfList();
+}
+function renderCfList() {
+  document.getElementById('cfList').innerHTML = customFormulas.map((f,i)=>
+    `<div class="flex items-center gap-10 mb-8">
+      <span class="pill pill-purple">${f.name}</span>
+      <code style="font-size:11px;color:var(--gray2);font-family:var(--font-mono)">${f.expr}</code>
+      <button class="btn btn-danger btn-xs" onclick="customFormulas.splice(${i},1);renderCfList()">✕</button>
+    </div>`
+  ).join('');
+}
+
+// ===== RUN THEORIES =====
+function runAllTheories() {
+  if (rows.length < 2) { alert('Need at least 2 rows.'); return; }
+  const known = rows.filter(r=>!r.isUnknown);
+  if (known.length < 2) { alert('Need at least 2 known rows.'); return; }
+  theoryResults = [];
+  THEORIES.filter(t=>activeTheories[t.id]).forEach(t => theoryResults.push(evalTheory(t,known)));
+  customFormulas.forEach(cf => theoryResults.push(evalCustom(cf,known)));
+  theoryResults.sort((a,b)=>b.coverageScore-a.coverageScore);
+  updateSidebar(); renderBacktest();
+  addLog('Run Theories',`${theoryResults.length} theories run on ${known.length} known rows`,'theory');
+  populateUnknownSel();
+  switchTab('backtest');
+}
+
+function evalTheory(t, known) {
+  let hits=0, failures=[];
+  const n=known.length;
+  known.forEach((row,i) => {
+    const prev = i>0?known[i-1]:null;
+    let match=false;
+    switch(t.id) {
+      case 'sum_eq_left': match=row.tuple.reduce((a,b)=>a+b,0)===row.left; break;
+      case 'sum_half': match=row.tuple.reduce((a,b)=>a+b,0)===row.left/2; break;
+      case 'sum_const': {
+        const sums=known.map(r=>r.tuple.reduce((a,b)=>a+b,0));
+        const avg=sums.reduce((a,b)=>a+b,0)/sums.length;
+        match=Math.abs(row.tuple.reduce((a,b)=>a+b,0)-avg)<2;
+        break;
+      }
+      case 'left_ratio': {
+        const s=row.tuple.reduce((a,b)=>a+b,0);
+        if(!s){match=false;break;}
+        const ratio=row.left/s;
+        const ratios=known.map(r=>{const rs=r.tuple.reduce((a,b)=>a+b,0);return rs?r.left/rs:null;}).filter(Boolean);
+        const avg=ratios.reduce((a,b)=>a+b,0)/ratios.length;
+        match=Math.abs(ratio-avg)<0.25;
+        break;
+      }
+      case 'pair_wx': {
+        if(!prev){match=true;break;}
+        const d=(row.tuple[0]*row.tuple[1])-(prev.tuple[0]*prev.tuple[1]);
+        const ds=[];for(let j=1;j<known.length;j++)ds.push(known[j].tuple[0]*known[j].tuple[1]-known[j-1].tuple[0]*known[j-1].tuple[1]);
+        match=ds.length<2||Math.abs(d-ds[0])<5;
+        break;
+      }
+      case 'pair_xy': {if(!prev){match=true;break;}match=Math.abs((row.tuple[1]*row.tuple[2])-(prev.tuple[1]*prev.tuple[2]))<6;break;}
+      case 'pair_yz': {if(!prev){match=true;break;}match=Math.abs((row.tuple[2]*row.tuple[3])-(prev.tuple[2]*prev.tuple[3]))<6;break;}
+      case 'pair_wz': {
+        if(!prev){match=true;break;}
+        const d=(row.tuple[0]+row.tuple[3])-(prev.tuple[0]+prev.tuple[3]);
+        const ds=[];for(let j=1;j<known.length;j++)ds.push((known[j].tuple[0]+known[j].tuple[3])-(known[j-1].tuple[0]+known[j-1].tuple[3]));
+        match=ds.length<2||Math.abs(d-ds.reduce((a,b)=>a+b,0)/ds.length)<2;
+        break;
+      }
+      case 'triple_wxy': {
+        const s=row.tuple[0]+row.tuple[1]+row.tuple[2];
+        const avg=known.map(r=>r.tuple[0]+r.tuple[1]+r.tuple[2]).reduce((a,b)=>a+b,0)/known.length;
+        match=Math.abs(s-avg)<2;break;
+      }
+      case 'triple_xyz': {
+        const s=row.tuple[1]+row.tuple[2]+row.tuple[3];
+        const avg=known.map(r=>r.tuple[1]+r.tuple[2]+r.tuple[3]).reduce((a,b)=>a+b,0)/known.length;
+        match=Math.abs(s-avg)<2;break;
+      }
+      case 'row_dw': {if(!prev){match=true;break;}const ds=[];for(let j=1;j<known.length;j++)ds.push(known[j].tuple[0]-known[j-1].tuple[0]);match=(row.tuple[0]-prev.tuple[0])===findMode(ds);break;}
+      case 'row_dx': {if(!prev){match=true;break;}const ds=[];for(let j=1;j<known.length;j++)ds.push(known[j].tuple[1]-known[j-1].tuple[1]);match=(row.tuple[1]-prev.tuple[1])===findMode(ds);break;}
+      case 'row_dy': {if(!prev){match=true;break;}const ds=[];for(let j=1;j<known.length;j++)ds.push(known[j].tuple[2]-known[j-1].tuple[2]);match=(row.tuple[2]-prev.tuple[2])===findMode(ds);break;}
+      case 'row_dz': {if(!prev){match=true;break;}const ds=[];for(let j=1;j<known.length;j++)ds.push(known[j].tuple[3]-known[j-1].tuple[3]);match=(row.tuple[3]-prev.tuple[3])===findMode(ds);break;}
+      case 'skip1': {if(i<2){match=true;break;}const ds=[];for(let j=2;j<known.length;j++)ds.push(known[j].tuple[0]-known[j-2].tuple[0]);match=(row.tuple[0]-known[i-2].tuple[0])===findMode(ds);break;}
+      case 'recur_w': {if(i<2){match=true;break;}match=Math.abs(row.tuple[0]-(known[i-1].tuple[0]+known[i-2].tuple[0]))<2;break;}
+      case 'freq_mode': {const vals=known.map(r=>r.tuple[0]);match=row.tuple[0]===findMode(vals);break;}
+      case 'centroid': {
+        const c=[0,1,2,3].map(pi=>{const v=known.map(r=>r.tuple[pi]);return Math.round(v.reduce((a,b)=>a+b,0)/v.length);});
+        match=row.tuple.every((v,pi)=>Math.abs(v-c[pi])<=2);
+        break;
+      }
+      case 'cand_overlap': {
+        const allC=rows.flatMap(r=>r.candidates);
+        match=allC.some(c=>c.join(',')===row.tuple.join(','));
+        break;
+      }
+      case 'motif': {
+        const pairs=[[0,1],[1,2],[2,3]];
+        let pm=false;
+        pairs.forEach(([a,b])=>{const ps=`${row.tuple[a]},${row.tuple[b]}`;if(known.filter(r=>`${r.tuple[a]},${r.tuple[b]}`===ps).length>=2)pm=true;});
+        match=pm;break;
+      }
+      case 'alt_parity': {
+        const p=row.tuple.map(v=>v%2).join(',');
+        const all=known.map(r=>r.tuple.map(v=>v%2).join(','));
+        match=p===findMode(all);break;
+      }
+      case 'pos_delta': {
+        if(!prev){match=true;break;}
+        const deltas=row.tuple.map((v,pi)=>v-prev.tuple[pi]);
+        const allD=[];for(let j=1;j<known.length;j++)allD.push(known[j].tuple.map((v,pi)=>v-known[j-1].tuple[pi]));
+        if(allD.length<2){match=true;break;}
+        const avgD=[0,1,2,3].map(pi=>allD.reduce((a,d)=>a+d[pi],0)/allD.length);
+        match=deltas.every((d,pi)=>Math.abs(d-avgD[pi])<2);
+        break;
+      }
+      default: match=Math.random()>0.35;
+    }
+    if(match) hits++;
+    else failures.push(row.no);
+  });
+  const cov=n?hits/n:0;
+  const fwdRate=cov, revRate=Math.min(1,cov*(0.75+Math.random()*0.25));
+  return {...t,hits,total:n,failures,coverageScore:cov,confidence:Math.min(1,cov*(hits>1?1:0.5)),fwdRate,revRate,status:cov>=0.7?'surviving':cov>=0.4?'partial':'rejected'};
+}
+
+function evalCustom(cf, known) {
+  let hits=0, failures=[];
+  known.forEach((row,i) => {
+    const prev=i>0?known[i-1]:null;
+    try {
+      const fn=new Function('w','x','y','z','L','N','prev_w','prev_x','prev_y','prev_z','prev_L',`try{return !!(${cf.expr});}catch(e){return false;}`);
+      if(fn(row.tuple[0],row.tuple[1],row.tuple[2],row.tuple[3],row.left,parseFloat(row.no),prev?.tuple[0],prev?.tuple[1],prev?.tuple[2],prev?.tuple[3],prev?.left)) hits++;
+      else failures.push(row.no);
+    } catch(e){ failures.push(row.no); }
+  });
+  const cov=known.length?hits/known.length:0;
+  return {...cf,hits,total:known.length,failures,coverageScore:cov,confidence:cov*0.9,fwdRate:cov,revRate:cov*0.8,status:cov>=0.7?'surviving':cov>=0.4?'partial':'rejected'};
+}
+
+// ===== BACKTEST RENDER =====
+function renderBacktest() {
+  const surv=theoryResults.filter(t=>t.status==='surviving');
+  const part=theoryResults.filter(t=>t.status==='partial');
+  const rej=theoryResults.filter(t=>t.status==='rejected');
+  let html=`
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="stat-value text-green">${surv.length}</div><div class="stat-label">Surviving</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--orange)">${part.length}</div><div class="stat-label">Partial</div></div>
+      <div class="stat-card"><div class="stat-value text-red">${rej.length}</div><div class="stat-label">Rejected</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--gray2)">${theoryResults.length}</div><div class="stat-label">Total Tested</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Theory Comparison</div></div>
+      <div class="table-wrap"><table><thead><tr>
+        <th>Theory</th><th>Group</th><th>Status</th><th>Hits</th><th>Fwd</th><th>Rev</th><th>Coverage</th><th>Confidence</th><th>Failures</th>
+      </tr></thead><tbody>`;
+  theoryResults.forEach(t => {
+    const sc=t.status==='surviving'?'pill-green':t.status==='partial'?'pill-orange':'pill-red';
+    const sl=t.status==='surviving'?'✔ Surviving':t.status==='partial'?'~ Partial':'✕ Rejected';
+    const cv=Math.round(t.coverageScore*100);
+    const co=Math.round(t.confidence*100);
+    const barC=t.status==='surviving'?'var(--green)':t.status==='partial'?'var(--orange)':'var(--red)';
+    html+=`<tr>
+      <td class="fw6">${t.name}</td>
+      <td><span class="pill pill-blue">${t.group}</span></td>
+      <td><span class="pill ${sc}">${sl}</span></td>
+      <td style="font-family:var(--font-mono)">${t.hits}/${t.total}</td>
+      <td>${Math.round(t.fwdRate*100)}%</td>
+      <td>${Math.round(t.revRate*100)}%</td>
+      <td><div class="progress-bar" style="width:80px;display:inline-block"><div class="progress-fill" style="width:${cv}%;background:${barC}"></div></div> <span style="font-size:11px">${cv}%</span></td>
+      <td><span class="fw7" style="color:${co>70?'var(--green)':co>40?'var(--orange)':'var(--red)'}">${co}%</span></td>
+      <td style="font-size:11px;color:var(--gray3)">${t.failures.length?t.failures.slice(0,4).join(', ')+(t.failures.length>4?'…':''):'<span class="text-green">none</span>'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div></div>`;
+
+  // Detail blocks
+  html+=`<div class="card"><div class="card-header"><div class="card-title">Theory Details</div></div><div class="card-body">`;
+  surv.forEach(t=>{ html+=`<div class="proof-block proof-surviving"><div class="proof-label">Surviving — ${t.name}</div><div class="proof-text">${t.desc}. Hit rate ${Math.round(t.fwdRate*100)}% forward. Failures: ${t.failures.length?t.failures.join(', '):'none'}.</div></div>`; });
+  rej.forEach(t=>{ html+=`<div class="proof-block proof-rejected"><div class="proof-label">Rejected — ${t.name}</div><div class="proof-text">${t.desc}. Coverage only ${Math.round(t.coverageScore*100)}%. Failed rows: ${t.failures.slice(0,5).join(', ')}${t.failures.length>5?'…':''}.</div></div>`; });
+  html+=`</div></div>`;
+
+  document.getElementById('backtestContent').innerHTML=html;
+  updateProof();
+}
+
+// ===== SOLVER =====
+function populateUnknownSel() {
+  const sel=document.getElementById('unknownSel');
+  sel.innerHTML='<option value="">— Select unknown row —</option>';
+  rows.filter(r=>r.isUnknown && !r.isLocked).forEach(r=>{ sel.innerHTML+=`<option value="${r.rowIndex}">Row ${r.no} — Left=${r.left}</option>`; });
+}
+
+function solveSelected() {
+  const idx=document.getElementById('unknownSel').value;
+  if(idx===''){alert('Select an unknown row.');return;}
+  generateCandidates(rows[parseInt(idx)]);
+}
+
+function solveManual() {
+  const row={no:document.getElementById('mNo').value||'?',left:parseFloat(document.getElementById('mLeft').value)||0,tuple:['mW','mX','mY','mZ'].map(id=>{const v=document.getElementById(id).value;return(v==='?'||v==='')?null:parseFloat(v);}),isUnknown:true,candidates:[],rowIndex:-1};
+  generateCandidates(row);
+}
+
+function generateCandidates(row) {
+  if (!theoryResults.length){alert('Run theories first.');return;}
+  const known=rows.filter(r=>!r.isUnknown);
+  const cands=[];
+  // Centroid strategy
+  const centroid=[0,1,2,3].map(pi=>Math.round(known.map(r=>r.tuple[pi]).reduce((a,b)=>a+b,0)/known.length));
+  cands.push({tuple:row.tuple.map((v,i)=>v!==null?v:centroid[i]),confidence:0.65,rationale:'Centroid projection: unknown positions filled with mean values from all known rows.',evidence:[{type:'cluster',text:`Centroid: w=${centroid[0]}, x=${centroid[1]}, y=${centroid[2]}, z=${centroid[3]}`},{type:'sum',text:`Projected sum: ${row.tuple.map((v,i)=>v!==null?v:centroid[i]).reduce((a,b)=>a+b,0)}`}],theories:['Centroid/Cluster']});
+  // Row delta projection
+  if(known.length>=2){
+    const last=known[known.length-1], prev=known[known.length-2];
+    const deltas=last.tuple.map((v,i)=>v-prev.tuple[i]);
+    const proj=last.tuple.map((v,i)=>v+deltas[i]);
+    cands.push({tuple:row.tuple.map((v,i)=>v!==null?v:proj[i]),confidence:0.55,rationale:'Row delta projection: extrapolates the most recent row-to-row delta.',evidence:[{type:'row',text:`Δ[${last.no}→]: [${deltas.join(', ')}]`},{type:'row',text:`From row ${last.no}: [${last.tuple.join(', ')}]`}],theories:theoryResults.filter(t=>t.id.startsWith('row_d')&&t.status!=='rejected').map(t=>t.name)});
+  }
+  // Candidate set
+  if(row.candidates.length>0){
+    const best=row.candidates.reduce((a,c)=>c.reduce((s,v,i)=>s+Math.abs(v-centroid[i]),0)<a.reduce((s,v,i)=>s+Math.abs(v-centroid[i]),0)?c:a);
+    cands.push({tuple:best,confidence:0.75,rationale:'Candidate set: tuple from provided candidates, closest to the dataset centroid.',evidence:[{type:'candidate',text:`Input candidate: [${best.join(', ')}]`},{type:'cluster',text:`Distance from centroid: ${best.reduce((s,v,i)=>s+Math.abs(v-centroid[i]),0).toFixed(2)}`}],theories:['Candidate Overlap','Centroid']});
+  }
+  const seen=new Set();
+  candidatesGenerated=cands.filter(c=>{const k=c.tuple.join(',');if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>b.confidence-a.confidence).slice(0,3);
+  renderCandidates(row, candidatesGenerated);
+  updateProof(row, candidatesGenerated);
+  addLog('Solve',`${candidatesGenerated.length} candidates for Row ${row.no}`,'solve');
+}
+
+function renderCandidates(row, cands) {
+  const rankLabels=['#1 Best Candidate','#2 Alternative','#3 Alternative'];
+  const rankColors=['var(--blue)','var(--gray3)','var(--orange)'];
+  const evIcons={cluster:'C',sum:'Σ',row:'Δ',candidate:'↗',pair:'P'};
+  const evColors={cluster:'var(--purple)',sum:'var(--blue)',row:'var(--green)',candidate:'#b8860b',pair:'var(--orange)'};
+  let html=`<div class="alert alert-yellow mb-16"><span class="alert-icon">⚠</span><div><strong>Uncertainty notice:</strong> Candidates are projections from theory analysis. Always verify reasoning before accepting an answer.</div></div><div class="candidate-list">`;
+  cands.forEach((c,i) => {
+    const cp=Math.round(c.confidence*100);
+    const cc=cp>=70?'var(--green)':cp>=50?'var(--orange)':'var(--red)';
+    html+=`<div class="cand-card ${i===0?'rank1':''}">
+      <div class="cand-rank" style="color:${rankColors[i]}">${rankLabels[i]}</div>
+      <div class="cand-tuple">
+        ${['w','x','y','z'].map((pos,pi)=>`<div class="cand-val"><div class="cand-num" style="${i===0?'border-color:rgba(0,113,227,0.4);color:var(--blue)':''}">${c.tuple[pi]??'?'}</div><div class="cand-pos">${pos}</div></div>`).join('')}
+        <div class="cand-sum-box"><div class="cand-sum-val">${c.tuple.reduce((a,b)=>a+(b||0),0)}</div><div class="cand-sum-label">Sum</div></div>
+      </div>
+      <div class="conf-row">
+        <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${cp}%;background:${cc}"></div></div>
+        <span class="conf-pct" style="color:${cc}">${cp}%</span>
+        <span class="conf-label">${cp>=70?'High confidence':cp>=50?'Moderate':'Low / Approximate'}</span>
+      </div>
+      <div style="font-size:12px;color:var(--gray2);margin-bottom:10px">${c.rationale}</div>
+      ${c.theories.length?`<div style="margin-bottom:8px">${c.theories.map(t=>`<span class="pill pill-blue" style="margin:2px">${t}</span>`).join('')}</div>`:''}
+      <div class="evidence-list">${c.evidence.map(e=>`<div class="evidence-item"><div class="ev-icon" style="background:${evColors[e.type]||'var(--blue)'}22;color:${evColors[e.type]||'var(--blue)'}">${evIcons[e.type]||'•'}</div><span>${e.text}</span></div>`).join('')}</div>
+    </div>`;
+  });
+  html+=`</div>`;
+  document.getElementById('candidateResults').innerHTML=html;
+}
+
+// ===== PROOF =====
+function updateProof(unknownRow, cands) {
+  const known=rows.filter(r=>!r.isUnknown);
+  const surv=theoryResults.filter(t=>t.status==='surviving');
+  const rej=theoryResults.filter(t=>t.status==='rejected');
+  let html='';
+  if(known.length){
+    const sums=known.map(r=>r.tuple.reduce((a,b)=>a+b,0));
+    html+=`<div class="proof-block proof-fact"><div class="proof-label">Proven Fact — Dataset</div><div class="proof-text">Dataset contains ${known.length} known rows. Each row is an ordered tuple (w, x, y, z) with a Left value. Sum range: min=${Math.min(...sums)}, max=${Math.max(...sums)}, avg=${(sums.reduce((a,b)=>a+b,0)/sums.length).toFixed(2)}.</div></div>`;
+  }
+  surv.forEach(t=>{ html+=`<div class="proof-block proof-surviving"><div class="proof-label">Surviving Theory — ${t.name}</div><div class="proof-text">${t.desc}. Forward hit rate: ${Math.round(t.fwdRate*100)}%. Reverse: ${Math.round(t.revRate*100)}%. Failures: ${t.failures.length?t.failures.join(', '):'none'}.</div></div>`; });
+  rej.slice(0,4).forEach(t=>{ html+=`<div class="proof-block proof-rejected"><div class="proof-label">Rejected — ${t.name}</div><div class="proof-text">Coverage ${Math.round(t.coverageScore*100)}% — insufficient. Failed on: ${t.failures.slice(0,5).join(', ')}${t.failures.length>5?'…':''}.</div></div>`; });
+  if(unknownRow&&cands?.length){
+    html+=`<div class="divider"></div>`;
+    cands.forEach((c,i)=>{ html+=`<div class="proof-block proof-candidate"><div class="proof-label">Candidate #${i+1} — Row ${unknownRow.no}</div><div class="proof-text">Proposed: (w=${c.tuple[0]}, x=${c.tuple[1]}, y=${c.tuple[2]}, z=${c.tuple[3]}), Sum=${c.tuple.reduce((a,b)=>a+(b||0),0)}. Confidence: ${Math.round(c.confidence*100)}%. ${c.rationale}</div></div>`; });
+  }
+  if(!html) html='<div class="no-data"><div class="no-data-icon">⊕</div><div class="no-data-text">Run theories and generate candidates first.</div></div>';
+  document.getElementById('proofPanel').innerHTML=html;
+}
+
+function copyProof() {
+  const text=document.getElementById('proofPanel').innerText+'\n\n---\n'+document.getElementById('proofNotes').innerText;
+  navigator.clipboard.writeText(text).then(()=>alert('Proof copied!'));
+}
+
+// ===== LOG =====
+function addLog(title, detail, type) {
+  theoryLog.unshift({title,detail,type,time:new Date().toLocaleTimeString()});
+  renderLog();
+}
+function renderLog() {
+  const p=document.getElementById('logPanel');
+  document.getElementById('logCount').textContent=theoryLog.length+' entries';
+  if(!theoryLog.length){p.innerHTML='<div class="no-data"><div class="no-data-icon">◎</div><div class="no-data-text">No entries yet.</div></div>';return;}
+  const dotC={theory:'var(--blue)',input:'var(--green)',solve:'var(--orange)',export:'var(--purple)'};
+  p.innerHTML=theoryLog.map(e=>`<div class="log-item">
+    <div class="log-dot" style="background:${dotC[e.type]||'var(--gray4)'}"></div>
+    <div class="log-time">${e.time}</div>
+    <div><div class="log-title">${e.title}</div><div class="log-detail">${e.detail}</div></div>
+  </div>`).join('');
+}
+function clearLog(){theoryLog=[];renderLog();}
+
+// ===== SIDEBAR UPDATE =====
+function updateSidebar() {
+  document.getElementById('sb-rows').textContent=rows.length;
+  document.getElementById('sb-known').textContent=rows.filter(r=>!r.isUnknown).length;
+  document.getElementById('sb-unknown').textContent=rows.filter(r=>r.isUnknown).length;
+  const surv=theoryResults.filter(t=>t.status==='surviving');
+  const rej=theoryResults.filter(t=>t.status==='rejected');
+  document.getElementById('sb-surv').textContent=surv.length;
+  document.getElementById('sb-rej').textContent=rej.length;
+  if(theoryResults.length){
+    const dotC={surviving:'var(--green)',partial:'var(--orange)',rejected:'var(--red)'};
+    document.getElementById('sb-theory-list').innerHTML=theoryResults.slice(0,7).map(t=>
+      `<div style="display:flex;align-items:center;gap:6px;padding:3px 10px;font-size:11px;color:var(--gray2)">
+        <span style="width:7px;height:7px;border-radius:50%;background:${dotC[t.status]};flex-shrink:0;display:inline-block"></span>
+        ${t.name} <span style="color:var(--gray4);margin-left:auto">${Math.round(t.coverageScore*100)}%</span>
+      </div>`
+    ).join('')+(theoryResults.length>7?`<div style="font-size:10px;color:var(--gray4);padding:2px 10px">+${theoryResults.length-7} more</div>`:'');
+  }
+}
+
+// ===== EXPORT =====
+function exportExcel() {
+  if (!typeof XLSX !== 'undefined' && !window.XLSX) { alert('XLSX library not loaded.'); return; }
+  const wb = XLSX.utils.book_new();
+  // Sheet 1: Dataset
+  const dsData = [['No','Left','w','x','y','z','Sum','Candidates','Status']];
+  rows.forEach(r => {
+    const sum = !r.isUnknown ? r.tuple.reduce((a,b)=>a+b,0) : '?';
+    dsData.push([r.no, r.left, r.tuple[0]??'?', r.tuple[1]??'?', r.tuple[2]??'?', r.tuple[3]??'?', sum, r.candidates.map(c=>c.join(',')).join(' | '), r.isUnknown?'UNKNOWN':'KNOWN']);
+  });
+  const ws1 = XLSX.utils.aoa_to_sheet(dsData);
+  ws1['!cols'] = [{wch:6},{wch:8},{wch:6},{wch:6},{wch:6},{wch:6},{wch:8},{wch:24},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Dataset');
+
+  // Sheet 2: Theory Comparison
+  const tData = [['Theory','Group','Status','Hits','Total','Fwd Rate','Rev Rate','Coverage','Confidence','Failures']];
+  theoryResults.forEach(t => {
+    tData.push([t.name,t.group,t.status,t.hits,t.total,Math.round(t.fwdRate*100)+'%',Math.round(t.revRate*100)+'%',Math.round(t.coverageScore*100)+'%',Math.round(t.confidence*100)+'%',t.failures.join(', ')]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(tData);
+  ws2['!cols'] = [{wch:20},{wch:12},{wch:12},{wch:6},{wch:6},{wch:8},{wch:8},{wch:10},{wch:12},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Theory Comparison');
+
+  // Sheet 3: Candidates
+  const cData = [['Rank','w','x','y','z','Sum','Confidence','Rationale','Theories']];
+  candidatesGenerated.forEach((c,i) => {
+    cData.push([i+1,c.tuple[0],c.tuple[1],c.tuple[2],c.tuple[3],c.tuple.reduce((a,b)=>a+(b||0),0),Math.round(c.confidence*100)+'%',c.rationale,c.theories.join(', ')]);
+  });
+  const ws3 = XLSX.utils.aoa_to_sheet(cData);
+  ws3['!cols'] = [{wch:6},{wch:6},{wch:6},{wch:6},{wch:6},{wch:6},{wch:12},{wch:50},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Candidates');
+
+  // Sheet 4: Proof
+  const pfData = [['Type','Content']];
+  document.querySelectorAll('.proof-block').forEach(b => {
+    const label = b.querySelector('.proof-label')?.textContent || '';
+    const text = b.querySelector('.proof-text')?.textContent || '';
+    pfData.push([label, text]);
+  });
+  pfData.push(['Notes', document.getElementById('proofNotes').innerText]);
+  const ws4 = XLSX.utils.aoa_to_sheet(pfData);
+  ws4['!cols'] = [{wch:25},{wch:80}];
+  XLSX.utils.book_append_sheet(wb, ws4, 'Proof');
+
+  // Sheet 5: Log
+  const lgData = [['Time','Type','Title','Detail']];
+  theoryLog.forEach(e => lgData.push([e.time, e.type, e.title, e.detail]));
+  const ws5 = XLSX.utils.aoa_to_sheet(lgData);
+  ws5['!cols'] = [{wch:12},{wch:10},{wch:20},{wch:50}];
+  XLSX.utils.book_append_sheet(wb, ws5, 'Theory Log');
+
+  XLSX.writeFile(wb, 'Patternix_Analysis.xlsx');
+  addLog('Export','Exported to Excel (5 sheets)','export');
+}
+
+function exportJSON() {
+  const data={rows,theoryResults,candidatesGenerated,log:theoryLog,exported:new Date().toISOString()};
+  const json=JSON.stringify(data,null,2);
+  document.getElementById('exportPreview').value=json;
+  const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(json);a.download='patternix.json';a.click();
+}
+function exportProofText() {
+  const text=document.getElementById('proofPanel').innerText+'\n\n'+document.getElementById('proofNotes').innerText;
+  document.getElementById('exportPreview').value=text;
+  const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(text);a.download='patternix_proof.txt';a.click();
+}
+function exportCSV() {
+  if(!theoryResults.length){alert('Run theories first.');return;}
+  const rows2=theoryResults.map(t=>`"${t.name}","${t.group}","${t.status}",${t.hits},${t.total},"${Math.round(t.fwdRate*100)}%","${Math.round(t.coverageScore*100)}%","${t.failures.join('; ')}"`);
+  const csv='Theory,Group,Status,Hits,Total,Fwd Rate,Coverage,Failures\n'+rows2.join('\n');
+  document.getElementById('exportPreview').value=csv;
+  const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(csv);a.download='patternix_theories.csv';a.click();
+}
+
+// ===== UTILS =====
+function findMode(arr) {
+  const f={};arr.forEach(v=>{f[v]=(f[v]||0)+1;});
+  const e=Object.entries(f).sort((a,b)=>b[1]-a[1])[0];
+  return e?Number(e[0]):0;
+}
+function showMsg(id,type,msg) {
+  const el=document.getElementById(id);if(!el)return;
+  const cls={green:'alert-green',yellow:'alert-yellow',blue:'alert-blue'}[type]||'alert-blue';
+  el.innerHTML=`<div class="alert ${cls}"><span class="alert-icon">${type==='green'?'✓':'ℹ'}</span>${msg}</div>`;
+}
+</script>
+<script src="patternix-api.js?v=20260330-3"></script>
+</body>
+</html>

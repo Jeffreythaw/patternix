@@ -1,0 +1,86 @@
+CREATE TABLE [4D_table_Datasets] (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    Name NVARCHAR(200) NOT NULL,
+    SourceText NVARCHAR(MAX) NULL,
+    CreatedAt DATETIME2 NOT NULL,
+    UpdatedAt DATETIME2 NOT NULL
+);
+
+CREATE TABLE [4D_table_DatasetRows] (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    DatasetId UNIQUEIDENTIFIER NOT NULL,
+    RowNo INT NOT NULL,
+    LeftValue INT NOT NULL,
+    RawLine NVARCHAR(1000) NULL,
+    W INT NULL,
+    X INT NULL,
+    Y INT NULL,
+    Z INT NULL,
+    IsUnknown BIT NOT NULL,
+    CandidatesJson NVARCHAR(MAX) NULL,
+    CONSTRAINT FK_4D_table_DatasetRows_4D_table_Datasets FOREIGN KEY (DatasetId) REFERENCES [4D_table_Datasets](Id) ON DELETE CASCADE
+);
+
+CREATE TABLE [4D_table_Theories] (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    Code NVARCHAR(80) NOT NULL,
+    Name NVARCHAR(200) NOT NULL,
+    GroupName NVARCHAR(120) NOT NULL,
+    Description NVARCHAR(500) NOT NULL,
+    IsActive BIT NOT NULL,
+    CreatedAt DATETIME2 NOT NULL
+);
+
+CREATE UNIQUE INDEX UX_4D_table_Theories_Code ON [4D_table_Theories](Code);
+
+CREATE TABLE [4D_table_TheoryRuns] (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    DatasetId UNIQUEIDENTIFIER NOT NULL,
+    RunAt DATETIME2 NOT NULL,
+    KnownRowCount INT NOT NULL,
+    CONSTRAINT FK_4D_table_TheoryRuns_4D_table_Datasets FOREIGN KEY (DatasetId) REFERENCES [4D_table_Datasets](Id) ON DELETE CASCADE
+);
+
+CREATE TABLE [4D_table_TheoryResults] (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    TheoryRunId UNIQUEIDENTIFIER NOT NULL,
+    TheoryCode NVARCHAR(80) NOT NULL,
+    Name NVARCHAR(200) NOT NULL,
+    GroupName NVARCHAR(120) NOT NULL,
+    Status NVARCHAR(24) NOT NULL,
+    Hits INT NOT NULL,
+    Total INT NOT NULL,
+    CoverageScore DECIMAL(18,4) NOT NULL,
+    Confidence DECIMAL(18,4) NOT NULL,
+    ForwardRate DECIMAL(18,4) NOT NULL,
+    ReverseRate DECIMAL(18,4) NOT NULL,
+    FailuresJson NVARCHAR(MAX) NOT NULL,
+    CONSTRAINT FK_4D_table_TheoryResults_4D_table_TheoryRuns FOREIGN KEY (TheoryRunId) REFERENCES [4D_table_TheoryRuns](Id) ON DELETE CASCADE
+);
+
+CREATE TABLE [4D_table_CandidateSolutions] (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    TheoryRunId UNIQUEIDENTIFIER NOT NULL,
+    RowNo INT NOT NULL,
+    Rank INT NOT NULL,
+    W INT NOT NULL,
+    X INT NOT NULL,
+    Y INT NOT NULL,
+    Z INT NOT NULL,
+    Confidence DECIMAL(18,4) NOT NULL,
+    Rationale NVARCHAR(1000) NOT NULL,
+    EvidenceJson NVARCHAR(MAX) NOT NULL,
+    TheoriesJson NVARCHAR(MAX) NOT NULL,
+    CONSTRAINT FK_4D_table_CandidateSolutions_4D_table_TheoryRuns FOREIGN KEY (TheoryRunId) REFERENCES [4D_table_TheoryRuns](Id) ON DELETE CASCADE
+);
+
+CREATE TABLE [4D_table_SolverLogs] (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    DatasetId UNIQUEIDENTIFIER NOT NULL,
+    TheoryRunId UNIQUEIDENTIFIER NULL,
+    CreatedAt DATETIME2 NOT NULL,
+    Level NVARCHAR(32) NOT NULL,
+    Title NVARCHAR(200) NOT NULL,
+    Detail NVARCHAR(2000) NOT NULL,
+    CONSTRAINT FK_4D_table_SolverLogs_4D_table_Datasets FOREIGN KEY (DatasetId) REFERENCES [4D_table_Datasets](Id) ON DELETE CASCADE
+);

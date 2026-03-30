@@ -1,0 +1,6 @@
+@Patternix.Api_HostAddress = http://localhost:5273
+
+GET {{Patternix.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,5 @@
+.DS_Store
+.playwright-cli/
+test-results/
+backend/Patternix.Api/bin/
+backend/Patternix.Api/obj/
